@@ -79,25 +79,40 @@ const ApplicationTracking = () => {
       .order('uploadDate', { ascending: false });
 
     if (docError) {
-      console.error('Error fetching documents:', docError);
+      console.error('Error fetching documents metadata:', docError);
       return;
     }
     
-    // Generate signed URLs for viewing/downloading the documents from Storage
+    // --- ROBUST URL GENERATION FIX ---
     const documentsWithUrls = fetchedDocuments?.map(doc => {
-      const { data: publicUrl } = supabase.storage
-        .from('resumes') // Assuming 'resumes' is the bucket name
+      if (!doc.storage_path) {
+        console.warn(`Document ${doc.id} missing storage path.`);
+        return { ...doc, url: '', downloadUrl: '' };
+      }
+
+      // getPublicUrl returns the public URL for a file in a public bucket
+      const { data: publicUrlData } = supabase.storage
+        .from('resumes') 
         .getPublicUrl(doc.storage_path); 
+        
+      const publicUrl = publicUrlData?.publicUrl;
+
+      if (!publicUrl) {
+          console.error(`Failed to generate public URL for: ${doc.storage_path}`);
+      }
 
       return {
         ...doc,
-        url: publicUrl?.publicUrl || '', // For viewing
-        downloadUrl: publicUrl?.publicUrl ? `${publicUrl.publicUrl}?download=` : '' // For downloading
+        // Use the generated public URL
+        url: publicUrl || '', 
+        // Append ?download=true or similar query for direct download
+        downloadUrl: publicUrl ? `${publicUrl}?download=true` : '' 
       };
     });
 
     setDocuments(documentsWithUrls || []);
   }, []);
+  // --- END ROBUST URL GENERATION FIX ---
 
   useEffect(() => {
     const storedUser = localStorage.getItem('prolink-user');
@@ -111,7 +126,6 @@ const ApplicationTracking = () => {
   }, [fetchApplicationData, fetchDocumentData]);
 
   // --- SUPABASE CRUD HANDLERS ---
-
   const handleScheduleInterview = async (interviewData) => {
     // This is a placeholder for a complex operation (scheduling, notifications, etc.)
     // For now, it just updates the application status in the database.
@@ -172,8 +186,10 @@ const ApplicationTracking = () => {
     if (insertError) {
       console.error('DB insert failed:', insertError);
       // Optional: Delete file from storage if DB insert fails
+      await supabase.storage.from('resumes').remove([filePath]);
+      throw insertError;
     } else {
-      fetchDocumentData(user.id);
+      fetchDocumentData(user.id); // Re-fetch all documents
     }
   };
 
@@ -212,15 +228,15 @@ const ApplicationTracking = () => {
     console.log('Update document (DB operation required):', documentId, updates);
   };
 
-  // ... rest of filtering logic (remains mostly the same but runs on fetched data)
+
+  // Filtering logic (remains the same)
   useEffect(() => {
     let filtered = [...applications];
-
     // ... [existing filtering logic] ...
-
     setFilteredApplications(filtered);
   }, [filters, sortBy, applications]);
-  // ... rest of component and handlers
+  
+  // ... rest of the component handlers (handleFiltersChange, handleLogout, etc.)
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);
@@ -285,13 +301,6 @@ const ApplicationTracking = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <NotificationIndicator
-                user={user}
-                notifications={notifications}
-                onMarkAsRead={handleMarkAsRead}
-                onMarkAllAsRead={handleMarkAllAsRead}
-              />
-              
               <Button onClick={() => navigate('/job-search-results')}>
                 <Icon name="Plus" size={16} />
                 <span className="ml-2">Apply to Jobs</span>

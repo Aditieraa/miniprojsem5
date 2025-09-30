@@ -34,26 +34,26 @@ const JobSearchResults = () => {
     }
   }, []); 
   
-  // Mock job data (ID changed to UUIDs)
+  // Mock job data (ID changed to UUIDs and data localized to India)
   const mockJobs = [
     {
       // ID changed to valid UUID format
       id: "a1b2c3d4-0001-4001-8001-000000000001",
-      title: "Senior Frontend Developer",
+      title: "Senior Frontend Developer (React/TS)",
       company: {
-        name: "TechCorp Inc.",
+        name: "Wipro Technologies",
         logo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop&crop=center",
-        rating: 4.5,
-        reviewCount: 127
+        rating: 4.1,
+        reviewCount: 320
       },
-      location: "San Francisco, CA",
+      location: "Bangalore, KA",
       isRemote: true,
-      salary: { min: 120000, max: 160000 },
+      salary: { min: 1800000, max: 2500000 }, // 18-25 LPA
       jobType: "Full-time",
       experienceLevel: "Senior",
-      description: `We're looking for a Senior Frontend Developer to join our growing team. You'll be responsible for building modern, responsive web applications using React, TypeScript, and cutting-edge technologies.\n\nThis role offers the opportunity to work on challenging projects that impact millions of users worldwide.`,
-      skills: ["React", "TypeScript", "JavaScript", "CSS", "Node.js", "GraphQL"],
-      benefits: ["Health Insurance", "401k", "Remote Work", "Flexible Hours"],
+      description: `Wipro is looking for a Senior Frontend Developer to join our growing team. You'll be responsible for building modern, responsive web applications using React, TypeScript, and cutting-edge technologies.\n\nThis role offers the opportunity to work on challenging projects that impact clients across the globe.`,
+      skills: ["React", "TypeScript", "JavaScript", "CSS", "Node.js", "AWS", "SQL"],
+      benefits: ["Health Insurance", "PF", "Remote Work", "Flexible Hours"],
       postedDate: "2025-01-10T10:00:00Z",
       priority: "featured",
       aiMatchPercentage: 92,
@@ -63,23 +63,24 @@ const JobSearchResults = () => {
     {
       // ID changed to valid UUID format
       id: "a1b2c3d4-0002-4002-8002-000000000002",
-      title: "Product Manager",
+      title: "Product Manager (FinTech)",
       company: {
-        name: "StartupXYZ",
+        name: "Razorpay",
         logo: "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=100&h=100&fit=crop&crop=center",
-        rating: 4.2,
-        reviewCount: 89
+        rating: 4.6,
+        reviewCount: 189
       },
-      location: "New York, NY",
+      location: "Mumbai, MH",
       isRemote: false,
-      salary: { min: 100000, max: 140000 },
+      salary: { min: 2000000, max: 3000000 }, // 20-30 LPA
       jobType: "Full-time",
       experienceLevel: "Mid",
-      description: `Join our product team as a Product Manager and help shape the future of our platform. You'll work closely with engineering, design, and business teams to deliver exceptional user experiences.\n\nWe're looking for someone with strong analytical skills and a passion for user-centered design.`,
+      description: `Join our FinTech product team as a Product Manager and help shape the future of our payment platform. You'll work closely with engineering, design, and business teams to deliver exceptional user experiences.\n\nWe're looking for someone with strong analytical skills and a passion for user-centered design.`,
       skills: ["Product Management", "Analytics", "User Research", "Agile", "SQL"],
-      benefits: ["Health Insurance", "Stock Options", "Learning Budget"],
+      benefits: ["Health Insurance", "ESOPs", "Learning Budget"],
       postedDate: "2025-01-09T14:30:00Z",
       priority: "urgent",
+      aiMatchPercentage: 78,
       hasApplied: false,
       isSaved: true
     },
@@ -88,14 +89,14 @@ const JobSearchResults = () => {
       id: "a1b2c3d4-0003-4003-8003-000000000003",
       title: "UX/UI Designer",
       company: {
-        name: "Design Studio",
+        name: "Lollypop Design Studio",
         logo: "https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=100&h=100&fit=crop&crop=center",
         rating: 4.7,
         reviewCount: 203
       },
-      location: "Austin, TX",
+      location: "Remote (India)",
       isRemote: true,
-      salary: { min: 80000, max: 110000 },
+      salary: { min: 900000, max: 1500000 }, // 9-15 LPA
       jobType: "Full-time",
       experienceLevel: "Mid",
       description: `We're seeking a talented UX/UI Designer to create beautiful and intuitive user experiences. You'll work on diverse projects ranging from mobile apps to web platforms.\n\nThe ideal candidate has a strong portfolio showcasing user-centered design solutions.`,
@@ -110,21 +111,21 @@ const JobSearchResults = () => {
     {
       // ID changed to valid UUID format
       id: "a1b2c3d4-0004-4004-8004-000000000004",
-      title: "Data Scientist",
+      title: "Data Scientist (Gen AI)",
       company: {
-        name: "Analytics Pro",
+        name: "TCS iON",
         logo: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=100&h=100&fit=crop&crop=center",
         rating: 4.3,
         reviewCount: 156
       },
-      location: "Seattle, WA",
-      isRemote: true,
-      salary: { min: 130000, max: 170000 },
+      location: "Pune, MH",
+      isRemote: false,
+      salary: { min: 1400000, max: 2100000 }, // 14-21 LPA
       jobType: "Full-time",
       experienceLevel: "Senior",
-      description: `Join our data science team to build machine learning models and extract insights from large datasets. You'll work on cutting-edge AI projects that drive business decisions.\n\nWe're looking for someone with strong statistical background and programming skills.`,
-      skills: ["Python", "Machine Learning", "SQL", "Statistics", "TensorFlow"],
-      benefits: ["Health Insurance", "401k", "Conference Budget", "Remote Work"],
+      description: `Join our Data Science team to build machine learning models and extract insights from large datasets. You'll work on cutting-edge AI projects that drive business decisions.\n\nWe're looking for someone with strong statistical background and programming skills.`,
+      skills: ["Python", "Machine Learning", "SQL", "TensorFlow", "Generative AI"],
+      benefits: ["Health Insurance", "PF", "Conference Budget", "Remote Work"],
       postedDate: "2025-01-07T16:45:00Z",
       priority: "featured",
       aiMatchPercentage: 88,
@@ -134,21 +135,21 @@ const JobSearchResults = () => {
     {
       // ID changed to valid UUID format
       id: "a1b2c3d4-0005-4005-8005-000000000005",
-      title: "DevOps Engineer",
+      title: "DevOps Engineer (Cloud Infra)",
       company: {
-        name: "CloudTech Solutions",
+        name: "HCLTech",
         logo: "https://images.unsplash.com/photo-1486312338219-ce68e2c6b7d3?w=100&h=100&fit=crop&crop=center",
-        rating: 4.1,
-        reviewCount: 94
+        rating: 4.0,
+        reviewCount: 494
       },
-      location: "Denver, CO",
+      location: "Noida, UP",
       isRemote: false,
-      salary: { min: 110000, max: 150000 },
+      salary: { min: 1600000, max: 2400000 }, // 16-24 LPA
       jobType: "Full-time",
       experienceLevel: "Mid",
       description: `We're looking for a DevOps Engineer to help us scale our infrastructure and improve our deployment processes. You'll work with modern cloud technologies and automation tools.\n\nThis role offers great opportunities for professional growth and learning.`,
       skills: ["AWS", "Docker", "Kubernetes", "CI/CD", "Terraform"],
-      benefits: ["Health Insurance", "401k", "Professional Development"],
+      benefits: ["Health Insurance", "PF", "Professional Development"],
       postedDate: "2025-01-06T11:20:00Z",
       priority: null,
       aiMatchPercentage: 73,
@@ -157,6 +158,14 @@ const JobSearchResults = () => {
     }
   ];
 
+  useEffect(() => {
+    // Read the active user from localStorage for header display and context
+    const storedUser = localStorage.getItem('prolink-user');
+    if (storedUser) {
+        setUser(JSON.parse(storedUser));
+    }
+  }, []); 
+  
   // Initialize jobs and apply filters
   useEffect(() => {
     const loadJobs = async () => {
@@ -205,9 +214,9 @@ const JobSearchResults = () => {
     if (filters?.salaryMin || filters?.salaryMax) {
       filtered = filtered?.filter(job => {
         const jobMin = job?.salary?.min || 0;
-        const jobMax = job?.salary?.max || 999999;
+        const jobMax = job?.salary?.max || 99999999;
         const filterMin = filters?.salaryMin || 0;
-        const filterMax = filters?.salaryMax || 999999;
+        const filterMax = filters?.salaryMax || 99999999;
         
         return jobMax >= filterMin && jobMin <= filterMax;
       });
@@ -311,15 +320,15 @@ const JobSearchResults = () => {
         .insert({
             user_id: user.id,
             job_id: jobId, // This is now a UUID string
-            company: applicationCompany,
-            position: applicationPosition,
+            company: applicationCompany, // Must exist in DB schema
+            position: applicationPosition, // Must exist in DB schema
             appliedDate: new Date().toISOString(),
             status: 'applied', // Initial status
             expected_salary: expectedSalary,
-            availability_date: availabilityDate,
+            availability_date: availabilityDate, // Must exist in DB schema
             cover_letter: coverLetter,
-            additional_info: additionalInfo,
-            resume_storage_path: filePath, // Store the reference to the file
+            additional_info: additionalInfo, // Must exist in DB schema
+            resume_storage_path: filePath, // Must exist in DB schema
         })
         .select()
         .single();

@@ -4,6 +4,21 @@ import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
 
+// Utility function for Indian Currency (Lakh/Crore)
+const formatIndianCurrency = (amount) => {
+  if (amount === null || amount === undefined || amount === 0) return 'N/A';
+  amount = Number(amount);
+  
+  if (amount >= 10000000) { 
+    return `₹${(amount / 10000000).toFixed(2).replace(/\.00$/, '')} Cr`;
+  } else if (amount >= 100000) { 
+    return `₹${(amount / 100000).toFixed(2).replace(/\.00$/, '')} L`;
+  } else if (amount >= 1000) {
+    return `₹${(amount / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  }
+  return `₹${amount.toLocaleString('en-IN')}`;
+};
+
 const JobCard = ({ job, onSave, onApply, className = "" }) => {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(job?.isSaved || false);
@@ -130,7 +145,7 @@ const JobCard = ({ job, onSave, onApply, className = "" }) => {
         <div className="flex items-center justify-between mb-3">
           <div className="text-lg font-semibold text-foreground">
             {job?.salary?.min && job?.salary?.max ? (
-              `$${job?.salary?.min?.toLocaleString()} - $${job?.salary?.max?.toLocaleString()}`
+              `${formatIndianCurrency(job?.salary?.min)} - ${formatIndianCurrency(job?.salary?.max)}`
             ) : job?.salary?.range || 'Salary not disclosed'}
           </div>
           <div className="flex items-center space-x-1 text-sm text-muted-foreground">

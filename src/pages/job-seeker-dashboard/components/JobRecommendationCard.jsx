@@ -3,13 +3,28 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 
+// Utility function for Indian Currency (Lakh/Crore)
+const formatIndianCurrency = (amount) => {
+  if (amount === null || amount === undefined || amount === 0) return 'N/A';
+  amount = Number(amount);
+  
+  if (amount >= 10000000) { 
+    return `₹${(amount / 10000000).toFixed(2).replace(/\.00$/, '')} Cr`;
+  } else if (amount >= 100000) { 
+    return `₹${(amount / 100000).toFixed(2).replace(/\.00$/, '')} L`;
+  } else if (amount >= 1000) {
+    return `₹${(amount / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  }
+  return `₹${amount.toLocaleString('en-IN')}`;
+};
+
 const JobRecommendationCard = ({ recommendations = [], onSearch = () => {}, onApplyQuick = () => {} }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
 
   const filterChips = [
     { id: 'remote', label: 'Remote', icon: 'Home' },
-    { id: 'high-salary', label: '$100k+', icon: 'DollarSign' },
+    { id: 'high-salary', label: '₹15L+', icon: 'DollarSign' },
     { id: 'tech', label: 'Technology', icon: 'Code' },
     { id: 'startup', label: 'Startup', icon: 'Zap' }
   ];
@@ -29,7 +44,8 @@ const JobRecommendationCard = ({ recommendations = [], onSearch = () => {}, onAp
 
   const formatSalary = (min, max) => {
     if (min && max) {
-      return `$${(min / 1000)?.toFixed(0)}k - $${(max / 1000)?.toFixed(0)}k`;
+      // Use the utility function for display
+      return `${formatIndianCurrency(min)} - ${formatIndianCurrency(max)}`;
     }
     return 'Competitive';
   };
@@ -131,8 +147,8 @@ const JobRecommendationCard = ({ recommendations = [], onSearch = () => {}, onAp
       {recommendations?.length === 0 && (
         <div className="text-center py-8">
           <Icon name="Target" size={32} className="text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">No recommendations yet</p>
-          <p className="text-xs text-muted-foreground">Complete your profile to get personalized job matches</p>
+          <p className="text-sm text-muted-foreground">No recommendations found</p>
+          <p className="text-xs text-muted-foreground">Complete your profile to receive personalized job matches</p>
         </div>
       )}
       <div className="mt-4 pt-4 border-t border-border">

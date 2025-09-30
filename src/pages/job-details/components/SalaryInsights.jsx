@@ -1,9 +1,24 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 
+// Utility function for Indian Currency (Lakh/Crore)
+const formatIndianCurrency = (amount) => {
+  if (amount === null || amount === undefined || amount === 0) return 'N/A';
+  amount = Number(amount);
+  
+  if (amount >= 10000000) { 
+    return `₹${(amount / 10000000).toFixed(2).replace(/\.00$/, '')} Cr`;
+  } else if (amount >= 100000) { 
+    return `₹${(amount / 100000).toFixed(2).replace(/\.00$/, '')} L`;
+  } else if (amount >= 1000) {
+    return `₹${(amount / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  }
+  return `₹${amount.toLocaleString('en-IN')}`;
+};
+
 const SalaryInsights = ({ job, marketData }) => {
   const formatSalary = (amount) => {
-    return `$${amount?.toLocaleString()}`;
+    return formatIndianCurrency(amount);
   };
 
   const getSalaryComparison = (jobSalary, marketAverage) => {
@@ -21,14 +36,14 @@ const SalaryInsights = ({ job, marketData }) => {
     } else if (difference > 0) {
       return {
         status: 'above',
-        text: `${Math.round(difference)}% above market`,
+        text: `${Math.round(difference)}% Above Market`,
         color: 'text-success',
         icon: 'ArrowUp'
       };
     } else {
       return {
         status: 'below',
-        text: `${Math.round(Math.abs(difference))}% below market`,
+        text: `${Math.round(Math.abs(difference))}% Below Market`,
         color: 'text-warning',
         icon: 'ArrowDown'
       };
@@ -70,7 +85,7 @@ const SalaryInsights = ({ job, marketData }) => {
                   ? `${formatSalary(jobMinSalary)}+`
                   : jobMaxSalary
                     ? `Up to ${formatSalary(jobMaxSalary)}`
-                    : 'Not disclosed'
+                    : 'Not Disclosed'
               }
             </div>
             {jobMinSalary && jobMaxSalary && (
