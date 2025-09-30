@@ -5,7 +5,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
 
-const LoginForm = ({ onLogin, isLoading }) => {
+const LoginForm = ({ onLogin, isLoading, onToggleMode }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -14,21 +14,24 @@ const LoginForm = ({ onLogin, isLoading }) => {
   });
   const [errors, setErrors] = useState({});
 
-  const mockCredentials = {
-    jobSeeker: { email: 'jobseeker@prolink.com', password: 'jobseeker123' },
-    recruiter: { email: 'recruiter@prolink.com', password: 'recruiter123' },
-    admin: { email: 'admin@prolink.com', password: 'admin123' }
+  // Built-in fixed mock credentials
+  const fixedCredentials = {
+candidate: { email: 'adititalekar2005@gmail.com', password: 'aditi123' },
+    recruiter: { email: 'arya2005@gmail.com', password: 'arya123' },
+    company: { email: 'diksha2006@gmail.com', password: 'arya123' },
+    interviewer: { email: 'vaibhav2005@gmail.com', password: 'vaibhav123' },
+    admin: { email: 'admin@gmail.com', password: 'admin123' }
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e?.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
     
     // Clear error when user starts typing
-    if (errors?.[name]) {
+    if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
@@ -36,67 +39,110 @@ const LoginForm = ({ onLogin, isLoading }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData?.email) {
+    if (!formData.email) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/?.test(formData?.email)) {
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
     
-    if (!formData?.password) {
+    // Using a simple check here, as strict validation is for registration
+    if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData?.password?.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
     }
     
     setErrors(newErrors);
-    return Object.keys(newErrors)?.length === 0;
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
-    e?.preventDefault();
+    e.preventDefault();
     
     if (!validateForm()) return;
     
-    // Check mock credentials
     const { email, password } = formData;
-    let userRole = null;
-    let isValidCredentials = false;
+    let userRoleKey = null;
     
-    Object.entries(mockCredentials)?.forEach(([role, creds]) => {
-      if (creds?.email === email && creds?.password === password) {
-        userRole = role;
-        isValidCredentials = true;
+    // 1. Check Fixed Mock Credentials
+    for (const [roleKey, creds] of Object.entries(fixedCredentials)) {
+      if (creds.email === email && creds.password === password) {
+        userRoleKey = roleKey;
+        break;
       }
-    });
+    }
+
+    // 2. Check Dynamically Registered Users
+    if (!userRoleKey) {
+        // Load custom users from local storage
+        const customUsers = JSON.parse(localStorage.getItem('prolink-mock-users') || '{}');
+        const customUser = customUsers[email];
+        if (customUser && customUser.password === password) {
+            userRoleKey = customUser.roleKey;
+        }
+    }
     
-    if (!isValidCredentials) {
+    if (!userRoleKey) {
       setErrors({ 
-        general: `Invalid credentials. Use: ${Object.entries(mockCredentials)?.map(([role, creds]) => `${role}: ${creds?.email}/${creds?.password}`)?.join(', ')}` 
+        general: `Invalid credentials. Please check your email/password. You can use any registered email or a fixed mock account.` 
       });
       return;
     }
-    
-    const userData = {
-      id: Date.now(),
-      name: userRole === 'jobSeeker' ? 'John Doe' : userRole === 'recruiter' ? 'Sarah Wilson' : 'Admin User',
-      email: email,
-      role: userRole,
-      avatar: `https://randomuser.me/api/portraits/${userRole === 'jobSeeker' ? 'men' : 'women'}/${Math.floor(Math.random() * 50) + 1}.jpg`
-    };
-    
-    await onLogin(userData);
-    
-    // Role-based navigation
-    switch (userRole) {
-      case 'jobSeeker': navigate('/job-seeker-dashboard');
+
+    // --- Role Mapping and User Data Construction ---
+    let finalAppRole;
+    let userName;
+    let gender;
+    let nameSuffix = userRoleKey.charAt(0).toUpperCase() + userRoleKey.slice(1);
+
+    switch (userRoleKey) {
+      case 'candidate':
+        finalAppRole = 'jobSeeker';
+        userName = `User (${nameSuffix})`;
+        gender = 'men';
         break;
-      case 'recruiter': navigate('/recruiter-dashboard');
+      case 'recruiter':
+        finalAppRole = 'recruiter';
+        userName = `Aditi (${nameSuffix})`;
+        gender = 'women';
         break;
-      case 'admin': navigate('/recruiter-dashboard'); // Admin uses recruiter dashboard for now
+      case 'company':
+        finalAppRole = 'recruiter';
+        userName = `TechCorp Inc. (${nameSuffix})`;
+        gender = 'men';
+        break;
+      case 'interviewer':
+        finalAppRole = 'recruiter';
+        userName = `User (${nameSuffix})`;
+        gender = 'men';
+        break;
+      case 'admin':
+        finalAppRole = 'admin';
+        userName = `Admin User (Aditi)`;
+        gender = 'women';
         break;
       default:
-        navigate('/job-seeker-dashboard');
+        // Handle dynamically registered users
+        finalAppRole = ['recruiter', 'company', 'interviewer', 'admin'].includes(userRoleKey) ? 'recruiter' : 'jobSeeker';
+        
+        // Use Aditi for recruiter side, User for job seeker side for dynamic accounts
+        if (finalAppRole === 'recruiter') {
+             userName = `Aditi (${nameSuffix})`;
+             gender = 'women';
+        } else {
+             userName = `User (${nameSuffix})`;
+             gender = 'men';
+        }
     }
+
+    const userData = {
+      id: Date.now(),
+      name: userName,
+      email: email,
+      role: finalAppRole, 
+      avatar: `https://randomuser.me/api/portraits/${gender}/${Math.floor(Math.random() * 50) + 1}.jpg`
+    };
+    
+    // Call the onLogin prop to handle saving the user and navigating.
+    await onLogin(userData);
   };
 
   const handleSocialLogin = async (provider) => {
@@ -109,7 +155,6 @@ const LoginForm = ({ onLogin, isLoading }) => {
     };
     
     await onLogin(userData);
-    navigate('/job-seeker-dashboard');
   };
 
   return (
@@ -121,13 +166,13 @@ const LoginForm = ({ onLogin, isLoading }) => {
         <h1 className="text-3xl font-bold text-foreground mb-2">Welcome back</h1>
         <p className="text-muted-foreground">Sign in to your ProLink account</p>
       </div>
-      {errors?.general && (
+      {errors.general && (
         <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
           <div className="flex items-start space-x-3">
             <Icon name="AlertCircle" size={20} className="text-error flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-error mb-1">Authentication Failed</p>
-              <p className="text-xs text-error/80">{errors?.general}</p>
+              <p className="text-xs text-error/80">{errors.general}</p>
             </div>
           </div>
         </div>
@@ -138,9 +183,9 @@ const LoginForm = ({ onLogin, isLoading }) => {
           type="email"
           name="email"
           placeholder="Enter your email"
-          value={formData?.email}
+          value={formData.email}
           onChange={handleInputChange}
-          error={errors?.email}
+          error={errors.email}
           required
         />
 
@@ -149,9 +194,9 @@ const LoginForm = ({ onLogin, isLoading }) => {
           type="password"
           name="password"
           placeholder="Enter your password"
-          value={formData?.password}
+          value={formData.password}
           onChange={handleInputChange}
-          error={errors?.password}
+          error={errors.password}
           required
         />
 
@@ -159,7 +204,7 @@ const LoginForm = ({ onLogin, isLoading }) => {
           <Checkbox
             label="Remember me"
             name="rememberMe"
-            checked={formData?.rememberMe}
+            checked={formData.rememberMe}
             onChange={handleInputChange}
           />
           <button
@@ -186,7 +231,7 @@ const LoginForm = ({ onLogin, isLoading }) => {
             <div className="w-full border-t border-border"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-background text-muted-foreground">Or continue with</span>
+            <span className="px-4 bg-card/90 text-muted-foreground">Or continue with</span>
           </div>
         </div>
 
@@ -217,7 +262,7 @@ const LoginForm = ({ onLogin, isLoading }) => {
           <button
             type="button"
             className="text-primary hover:text-primary/80 font-medium transition-smooth"
-            onClick={() => navigate('/register')}
+            onClick={onToggleMode}
           >
             Sign up for free
           </button>

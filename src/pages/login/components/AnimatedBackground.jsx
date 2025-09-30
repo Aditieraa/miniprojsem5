@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 
 const AnimatedBackground = () => {
   const canvasRef = useRef(null);
-  const animationRef = useRef(null);
   const particlesRef = useRef([]);
 
   useEffect(() => {
@@ -19,17 +18,18 @@ const AnimatedBackground = () => {
 
     const createParticles = () => {
       const particles = [];
-      const particleCount = Math.min(50, Math.floor(window.innerWidth / 20));
+      // Adjust particle density based on screen size
+      const particleCount = Math.min(60, Math.floor(window.innerWidth / 15));
       
       for (let i = 0; i < particleCount; i++) {
         particles?.push({
           x: Math.random() * canvas?.width,
           y: Math.random() * canvas?.height,
-          size: Math.random() * 3 + 1,
-          speedX: (Math.random() - 0.5) * 0.5,
-          speedY: (Math.random() - 0.5) * 0.5,
-          opacity: Math.random() * 0.5 + 0.2,
-          hue: Math.random() * 60 + 200 // Blue to purple range
+          size: Math.random() * 2 + 0.5, // Smaller, subtle particles
+          speedX: (Math.random() - 0.5) * 0.2, // Slower movement
+          speedY: (Math.random() - 0.5) * 0.2,
+          opacity: Math.random() * 0.4 + 0.1, // Very subtle opacity
+          hue: Math.random() * 40 + 200 // Hues from deep blue (200) to cyan/light blue (240)
         });
       }
       return particles;
@@ -38,11 +38,11 @@ const AnimatedBackground = () => {
     const animate = () => {
       ctx?.clearRect(0, 0, canvas?.width, canvas?.height);
       
-      // Create gradient background
+      // Create subtle gradient background (Deep Navy Blue to Lighter Blue)
       const gradient = ctx?.createLinearGradient(0, 0, canvas?.width, canvas?.height);
-      gradient?.addColorStop(0, 'rgba(59, 130, 246, 0.05)'); // blue-500/5
-      gradient?.addColorStop(0.5, 'rgba(147, 51, 234, 0.03)'); // violet-600/3
-      gradient?.addColorStop(1, 'rgba(245, 158, 11, 0.02)'); // amber-500/2
+      gradient?.addColorStop(0, 'rgba(0, 77, 153, 0.05)'); // Primary/Navy
+      gradient?.addColorStop(0.5, 'rgba(0, 153, 204, 0.03)'); // Secondary/Cyan
+      gradient?.addColorStop(1, 'rgba(0, 77, 153, 0.05)'); 
       
       ctx.fillStyle = gradient;
       ctx?.fillRect(0, 0, canvas?.width, canvas?.height);
@@ -62,7 +62,7 @@ const AnimatedBackground = () => {
         // Draw particle
         ctx?.save();
         ctx.globalAlpha = particle?.opacity;
-        ctx.fillStyle = `hsl(${particle?.hue}, 70%, 60%)`;
+        ctx.fillStyle = `hsl(${particle?.hue}, 80%, 70%)`; // Brighter saturation for particle dots
         ctx?.beginPath();
         ctx?.arc(particle?.x, particle?.y, particle?.size, 0, Math.PI * 2);
         ctx?.fill();
@@ -74,10 +74,10 @@ const AnimatedBackground = () => {
           const dy = particle?.y - otherParticle?.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          if (distance < 100) {
+          if (distance < 120) { // Slightly increased connection distance
             ctx?.save();
-            ctx.globalAlpha = (100 - distance) / 100 * 0.1;
-            ctx.strokeStyle = `hsl(${(particle?.hue + otherParticle?.hue) / 2}, 70%, 60%)`;
+            ctx.globalAlpha = (120 - distance) / 120 * 0.08; // Very subtle connections
+            ctx.strokeStyle = `hsl(210, 80%, 60%)`; // Light blue connection lines
             ctx.lineWidth = 1;
             ctx?.beginPath();
             ctx?.moveTo(particle?.x, particle?.y);

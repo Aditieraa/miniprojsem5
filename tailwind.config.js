@@ -18,50 +18,50 @@ export default {
     },
     extend: {
       colors: {
-        border: "var(--color-border)", /* gray-200 */
-        input: "var(--color-input)", /* white */
-        ring: "var(--color-ring)", /* blue-600 */
-        background: "var(--color-background)", /* gray-50 */
-        foreground: "var(--color-foreground)", /* gray-800 */
+        border: "var(--color-border)", /* Light gray for separation */
+        input: "var(--color-input)", /* White or near-white */
+        ring: "var(--color-primary)", /* Primary color for focus rings */
+        background: "var(--color-background)", /* Off-white/light gray body background */
+        foreground: "var(--color-foreground)", /* Dark text color */
         primary: {
-          DEFAULT: "var(--color-primary)", /* blue-600 */
-          foreground: "var(--color-primary-foreground)", /* white */
+          DEFAULT: "var(--color-primary)", /* Navy Blue */
+          foreground: "var(--color-primary-foreground)", /* White */
         },
         secondary: {
-          DEFAULT: "var(--color-secondary)", /* violet-600 */
-          foreground: "var(--color-secondary-foreground)", /* white */
+          DEFAULT: "var(--color-secondary)", /* Dark Teal/Cyan for secondary actions */
+          foreground: "var(--color-secondary-foreground)", /* White */
         },
         destructive: {
-          DEFAULT: "var(--color-destructive)", /* red-500 */
-          foreground: "var(--color-destructive-foreground)", /* white */
+          DEFAULT: "var(--color-error)", /* Red */
+          foreground: "var(--color-error-foreground)", /* White */
         },
         muted: {
-          DEFAULT: "var(--color-muted)", /* gray-100 */
-          foreground: "var(--color-muted-foreground)", /* gray-500 */
+          DEFAULT: "var(--color-muted)", /* Lighter gray for backgrounds */
+          foreground: "var(--color-muted-foreground)", /* Medium gray for secondary text */
         },
         accent: {
-          DEFAULT: "var(--color-accent)", /* amber-500 */
-          foreground: "var(--color-accent-foreground)", /* white */
+          DEFAULT: "var(--color-accent)", /* Orange/Gold for alerts/emphasis */
+          foreground: "var(--color-accent-foreground)", /* White */
         },
         popover: {
-          DEFAULT: "var(--color-popover)", /* white */
-          foreground: "var(--color-popover-foreground)", /* gray-800 */
+          DEFAULT: "var(--color-popover)", /* White */
+          foreground: "var(--color-popover-foreground)", /* Dark text */
         },
         card: {
-          DEFAULT: "var(--color-card)", /* white */
-          foreground: "var(--color-card-foreground)", /* gray-800 */
+          DEFAULT: "var(--color-card)", /* White or light background for components */
+          foreground: "var(--color-card-foreground)", /* Dark text */
         },
         success: {
-          DEFAULT: "var(--color-success)", /* emerald-500 */
-          foreground: "var(--color-success-foreground)", /* white */
+          DEFAULT: "var(--color-success)", /* Green */
+          foreground: "var(--color-success-foreground)", /* White */
         },
         warning: {
-          DEFAULT: "var(--color-warning)", /* amber-500 */
-          foreground: "var(--color-warning-foreground)", /* white */
+          DEFAULT: "var(--color-warning)", /* Yellow/Amber */
+          foreground: "var(--color-warning-foreground)", /* White */
         },
         error: {
-          DEFAULT: "var(--color-error)", /* red-500 */
-          foreground: "var(--color-error-foreground)", /* white */
+          DEFAULT: "var(--color-error)", /* Red */
+          foreground: "var(--color-error-foreground)", /* White */
         },
       },
       borderRadius: {
@@ -91,14 +91,15 @@ export default {
         '128': '32rem',
       },
       boxShadow: {
-        'subtle': '0 1px 3px rgba(0, 0, 0, 0.1)',
-        'moderate': '0 4px 6px rgba(0, 0, 0, 0.1)',
-        'prominent': '0 10px 15px rgba(0, 0, 0, 0.1)',
+        'subtle': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+        'moderate': '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
+        'prominent': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "shimmer": "shimmer 2s infinite",
+        "scale-in": "scale-in 0.3s ease-out",
       },
       keyframes: {
         "accordion-down": {
@@ -112,6 +113,10 @@ export default {
         "shimmer": {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
+        },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.9)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
         },
       },
       backdropBlur: {

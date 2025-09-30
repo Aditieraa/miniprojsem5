@@ -16,7 +16,7 @@ const Header = ({ user = null, onLogout = () => {} }) => {
     const baseItems = [
       { 
         label: 'Dashboard', 
-        path: user?.role === 'recruiter' ? '/recruiter-dashboard' : '/job-seeker-dashboard',
+        path: user?.role === 'recruiter' || user?.role === 'admin' ? '/recruiter-dashboard' : '/job-seeker-dashboard',
         icon: 'LayoutDashboard'
       },
       { 
@@ -50,14 +50,14 @@ const Header = ({ user = null, onLogout = () => {} }) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-primary shadow-lg">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
             <Icon name="Zap" size={20} color="white" />
           </div>
-          <span className="text-xl font-semibold text-foreground">ProLink</span>
+          <span className="text-xl font-bold text-primary-foreground">ProLink</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -69,8 +69,8 @@ const Header = ({ user = null, onLogout = () => {} }) => {
                 to={item?.path}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-smooth ${
                   isActive(item?.path)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    ? 'bg-secondary text-secondary-foreground shadow-sm' // Active state uses secondary color
+                    : 'text-primary-foreground hover:text-secondary-foreground hover:bg-white/10' // Inactive state
                 }`}
               >
                 <Icon name={item?.icon} size={16} />
@@ -85,10 +85,11 @@ const Header = ({ user = null, onLogout = () => {} }) => {
           {user ? (
             <>
               {/* Notifications */}
+              {/* Note: NotificationIndicator logic is handled in dashboards, this is a simplified button */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative"
+                className="relative text-primary-foreground hover:bg-white/10"
                 onClick={() => {}}
               >
                 <Icon name="Bell" size={20} />
@@ -103,9 +104,9 @@ const Header = ({ user = null, onLogout = () => {} }) => {
                   variant="ghost"
                   size="sm"
                   onClick={toggleProfileMenu}
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 text-primary-foreground hover:bg-white/10"
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                  <div className="w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-sm font-medium">
                     {user?.name?.charAt(0) || 'U'}
                   </div>
                   <span className="hidden lg:block text-sm font-medium">{user?.name}</span>
@@ -114,7 +115,7 @@ const Header = ({ user = null, onLogout = () => {} }) => {
 
                 {/* Profile Dropdown */}
                 {isProfileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-popover border border-border rounded-md shadow-moderate py-1 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-popover border border-border rounded-md shadow-moderate py-1 z-50 animate-scale-in origin-top-right">
                     <div className="px-4 py-2 border-b border-border">
                       <p className="text-sm font-medium text-foreground">{user?.name}</p>
                       <p className="text-xs text-muted-foreground">{user?.email}</p>
@@ -137,7 +138,7 @@ const Header = ({ user = null, onLogout = () => {} }) => {
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-smooth"
                     >
                       <Icon name="LogOut" size={16} />
                       <span>Sign out</span>
@@ -150,7 +151,7 @@ const Header = ({ user = null, onLogout = () => {} }) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden"
+                className="md:hidden text-primary-foreground hover:bg-white/10"
                 onClick={toggleMobileMenu}
               >
                 <Icon name={isMobileMenuOpen ? "X" : "Menu"} size={20} />
@@ -159,12 +160,12 @@ const Header = ({ user = null, onLogout = () => {} }) => {
           ) : (
             <div className="flex items-center space-x-2">
               <Link to="/login">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-white/10">
                   Sign in
                 </Button>
               </Link>
               <Link to="/register">
-                <Button size="sm">
+                <Button size="sm" variant="secondary">
                   Get started
                 </Button>
               </Link>
@@ -174,7 +175,7 @@ const Header = ({ user = null, onLogout = () => {} }) => {
       </div>
       {/* Mobile Navigation Menu */}
       {user && isMobileMenuOpen && (
-        <div className="md:hidden bg-card border-t border-border">
+        <div className="md:hidden bg-primary/95 border-t border-white/10">
           <nav className="px-4 py-2 space-y-1">
             {navigationItems?.map((item) => (
               <Link
@@ -182,8 +183,8 @@ const Header = ({ user = null, onLogout = () => {} }) => {
                 to={item?.path}
                 className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-smooth ${
                   isActive(item?.path)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    ? 'bg-secondary text-secondary-foreground'
+                    : 'text-primary-foreground hover:bg-white/10'
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >

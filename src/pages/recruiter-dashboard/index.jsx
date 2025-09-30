@@ -266,6 +266,8 @@ const RecruiterDashboard = () => {
   };
 
   const handleLogout = () => {
+    // Clear persistent storage and redirect to login
+    localStorage.removeItem('prolink-user');
     setUser(null);
     navigate('/login');
   };
@@ -432,6 +434,11 @@ const RecruiterDashboard = () => {
                         >
                           <Icon name={tab?.icon} size={16} />
                           <span>{tab?.label}</span>
+                          {tab?.count !== undefined && (
+                            <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs">
+                              {tab?.count}
+                            </span>
+                          )}
                         </button>
                       ))}
                     </div>

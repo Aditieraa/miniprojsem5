@@ -16,8 +16,8 @@ const Routes = () => {
       <ErrorBoundary>
       <ScrollToTop />
       <RouterRoutes>
-        {/* Define your route here */}
-        <Route path="/" element={<ApplicationTracking />} />
+        {/* Set the root path "/" to render the LoginPage, ensuring it is the first view */}
+        <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
         <Route path="/job-seeker-dashboard" element={<JobSeekerDashboard />} />

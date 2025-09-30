@@ -23,8 +23,8 @@ const JobSeekerDashboard = () => {
   // Mock user data
   const mockUser = {
     id: 1,
-    name: "Sarah Johnson",
-    email: "sarah.johnson@email.com",
+    name: "Aditi Talekar",
+    email: "adititalekar2005@gmail.com",
     role: "job_seeker",
     avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
     profileCompletion: 75,
@@ -288,6 +288,8 @@ const JobSeekerDashboard = () => {
   }, []);
 
   const handleLogout = () => {
+    // Clear persistent storage and redirect to login
+    localStorage.removeItem('prolink-user');
     setUser(null);
     navigate('/login');
   };
@@ -304,7 +306,7 @@ const JobSeekerDashboard = () => {
         break;
       case 'saved-jobs': case'job-alerts':
         // Navigate to respective pages (not implemented)
-        console.log(`Navigate to ${actionId}`);
+        console.log(`Maps to ${actionId}`);
         break;
       default:
         console.log(`Action: ${actionId}`);
