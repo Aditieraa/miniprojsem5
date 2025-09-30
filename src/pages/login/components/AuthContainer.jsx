@@ -1,110 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LoginForm from './LoginForm';
 import RegistrationForm from './RegistrationForm';
-
-// Helper function to map detailed mock role keys to simplified application roles
-const mapRoleToAppRole = (roleKey) => {
-    switch (roleKey) {
-        case 'candidate':
-            return 'jobSeeker'; 
-        case 'recruiter':
-        case 'company':
-        case 'interviewer':
-        case 'admin':
-            return 'recruiter'; // All hiring-side roles map to recruiter dashboard for navigation
-        default:
-            return 'jobSeeker';
-    }
-};
+import { supabase, mapRoleToAppRole, createMockUserData } from '../../../supabaseClient';
 
 const AuthContainer = ({ onLogin, isLoading }) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const [authError, setAuthError] = useState('');
 
-  const handleRegistration = async (formData) => {
-    setAuthError('');
-    
-    // 1. Mock Registration: Save new user credentials (email/password/role) to local storage
-    const newMockUser = {
-        email: formData.email,
-        password: formData.password,
-        roleKey: formData.role, // Store the specific role key
+  // Check Supabase session on initial load
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // If a valid Supabase session exists, log them in locally
+        const roleKey = user?.user_metadata?.user_role || 'candidate'; // Get role from metadata
+        
+        const { userName, gender } = createMockUserData(user.email, roleKey);
+
+        const userData = {
+            id: user.id,
+            name: userName,
+            email: user.email,
+            role: mapRoleToAppRole(roleKey),
+            avatar: `https://randomuser.me/api/portraits/${gender}/${Math.floor(Math.random() * 50) + 1}.jpg`
+        };
+
+        // This triggers the local user state update and redirect in LoginPage.jsx
+        onLogin(userData); 
+      }
     };
-    
-    // Retrieve existing mock users or initialize an empty object
-    const existingUsers = JSON.parse(localStorage.getItem('prolink-mock-users') || '{}');
-    const fixedEmails = [
-        'candidate@prolink.com', 'recruiter@prolink.com', 'company@prolink.com', 
-        'interviewer@prolink.com', 'admin@prolink.com'
-    ];
+    checkSession();
+  }, []);
 
-    // Check if user already exists (fixed accounts or dynamic accounts)
-    if (existingUsers[formData.email] || fixedEmails.includes(formData.email)) {
-        setAuthError('Registration failed: A user with this email already exists.');
-        return;
-    }
+  const handleSupabaseAuthCallback = async ({ user, roleKey }) => {
+    if (!user) return; // Should not happen with successful auth call
 
-    // Save the new user
-    localStorage.setItem('prolink-mock-users', JSON.stringify({
-        ...existingUsers,
-        [formData.email]: newMockUser
-    }));
-
-    // 2. Automatically Log In after successful registration
-    const finalAppRole = mapRoleToAppRole(formData.role);
-    const nameSuffix = formData.role.charAt(0).toUpperCase() + formData.role.slice(1);
-    
-    let userName;
-    let gender;
-    
-    if (finalAppRole === 'recruiter') {
-        userName = `Aditi (${nameSuffix})`;
-        gender = 'women';
-    } else {
-        userName = `User (${nameSuffix})`;
-        gender = 'men';
-    }
+    const finalAppRole = mapRoleToAppRole(roleKey);
+    const { userName, gender } = createMockUserData(user.email, roleKey);
     
     const userData = {
-        id: Date.now(),
+        id: user.id,
         name: userName,
-        email: formData.email,
+        email: user.email,
         role: finalAppRole,
         avatar: `https://randomuser.me/api/portraits/${gender}/${Math.floor(Math.random() * 50) + 1}.jpg`
     };
-
-    // Use a small delay to simulate network latency for registration
-    await new Promise(resolve => setTimeout(resolve, 500));
     
-    await onLogin(userData); // Proceed to login flow
+    // Proceed to login flow handler in LoginPage.jsx
+    await onLogin(userData);
   };
 
   return (
     <div className="w-full max-w-md">
-        {/* Display general authentication errors above the forms if necessary */}
-        {authError && (
-             <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg">
-                <p className="text-sm text-error">{authError}</p>
-            </div>
-        )}
-        
         {isLoginMode ? (
             <LoginForm 
-                onLogin={onLogin} 
+                onLogin={handleSupabaseAuthCallback} 
                 isLoading={isLoading} 
-                onToggleMode={() => {
-                    setIsLoginMode(false);
-                    setAuthError('');
-                }}
+                onToggleMode={() => setIsLoginMode(false)}
             />
         ) : (
             <RegistrationForm 
-                onRegister={handleRegistration} 
+                onRegister={handleSupabaseAuthCallback} 
                 isLoading={isLoading} 
-                onToggleMode={() => {
-                    setIsLoginMode(true);
-                    setAuthError('');
-                }}
+                onToggleMode={() => setIsLoginMode(true)}
             />
         )}
     </div>

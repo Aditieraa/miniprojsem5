@@ -4,6 +4,7 @@ import AuthContainer from './components/AuthContainer';
 import AnimatedBackground from './components/AnimatedBackground';
 import AccessibilityMenu from './components/AccessibilityMenu';
 import LoadingSpinner from './components/LoadingSpinner';
+import { supabase } from '../../supabaseClient'; // Import supabase client
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -41,10 +42,10 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait for a moment to simulate network latency
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Save user data to localStorage
+      // Save user data to localStorage (Local copy for non-API components)
       localStorage.setItem('prolink-user', JSON.stringify(userData));
       setUser(userData);
       
@@ -62,12 +63,11 @@ const LoginPage = () => {
           destinationPath = '/job-seeker-dashboard';
       }
       
-      // Navigate after successful login (this happens when LoginForm calls handleLogin)
+      // Navigate after successful login
       navigate(destinationPath, { replace: true });
 
     } catch (error) {
       console.error('Login error:', error);
-      // If login fails, ensure user state is null
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -76,7 +76,6 @@ const LoginPage = () => {
 
   // If user is logged in (meaning we are redirecting), show the spinner/loading state
   if (localStorage.getItem('prolink-user')) {
-    // Show spinner if we are authenticated and redirecting (avoids flashing login screen)
     return <LoadingSpinner message="Redirecting to your dashboard..." />;
   }
 
@@ -88,9 +87,9 @@ const LoginPage = () => {
       {/* Accessibility Menu */}
       <AccessibilityMenu />
       
-      {/* Main Content */}
+      {/* Main Content - Centered */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        {/* Glassmorphism Container with Scale-In Animation */}
+        {/* Glassmorphism Container with Scale-In Animation (Aesthetic) */}
         <div className="bg-card/90 backdrop-blur-md border border-border/50 rounded-xl shadow-prominent p-8 w-full max-w-md animate-scale-in">
           {/* Using AuthContainer to switch between Login and Registration */}
           <AuthContainer onLogin={handleLogin} isLoading={isLoading} />

@@ -12,6 +12,7 @@ import JobAlertsCard from './components/JobAlertsCard';
 import ApplicationMetricsChart from './components/ApplicationMetricsChart';
 import QuickActionsPanel from './components/QuickActionsPanel';
 import Icon from '../../components/AppIcon';
+import { supabase } from '../../supabaseClient'; // Import Supabase Client
 
 
 const JobSeekerDashboard = () => {
@@ -20,17 +21,17 @@ const JobSeekerDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock user data
+  // Mock user data (for initial display while waiting for real data/session check)
   const mockUser = {
     id: 1,
-    name: "Aditi Talekar",
-    email: "adititalekar2005@gmail.com",
+    name: "User",
+    email: "user@email.com",
     role: "job_seeker",
     avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
     profileCompletion: 75,
     memberSince: "2024-01-15"
   };
-
+  
   // Mock applications data
   const mockApplications = [
     {
@@ -278,20 +279,31 @@ const JobSeekerDashboard = () => {
     }
   ];
 
+
   useEffect(() => {
-    // Simulate loading user data
+    const storedUser = localStorage.getItem('prolink-user');
+    if (storedUser) {
+        setUser(JSON.parse(storedUser));
+    }
+    // Simulate loading external data like notifications
     setTimeout(() => {
-      setUser(mockUser);
       setNotifications(mockNotifications);
       setIsLoading(false);
     }, 1000);
   }, []);
 
-  const handleLogout = () => {
-    // Clear persistent storage and redirect to login
+  const handleLogout = async () => {
+    // 1. Call Supabase sign out
+    const { error } = await supabase.auth.signOut();
+    
+    // 2. Clear persistent storage and redirect to login
     localStorage.removeItem('prolink-user');
     setUser(null);
     navigate('/login');
+
+    if (error) {
+        console.error('Supabase sign out error:', error);
+    }
   };
 
   const handleQuickAction = (actionId) => {
@@ -375,7 +387,9 @@ const JobSeekerDashboard = () => {
     );
   };
 
-  if (isLoading) {
+  // If user object is null, but isLoading is false, the user is not authenticated.
+  if (isLoading || !user) {
+    // Show a loading screen while we determine auth state
     return (
       <div className="min-h-screen bg-background">
         <Header user={user} onLogout={handleLogout} />
@@ -457,7 +471,7 @@ const JobSeekerDashboard = () => {
               />
             </div>
 
-            {/* Right Column - Secondary Content */}
+            /* Right Column - Secondary Content */
             <div className="lg:col-span-4 space-y-6">
               {/* Profile Completion */}
               <ProfileCompletionCard
@@ -474,7 +488,7 @@ const JobSeekerDashboard = () => {
                 onJoinInterview={handleJoinInterview}
               />
 
-              {/* Skill Analysis */}
+              /* Skill Analysis */
               <SkillAnalysisCard
                 skillGaps={mockSkillGaps}
                 recommendations={mockLearningRecommendations}

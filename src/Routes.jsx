@@ -16,8 +16,12 @@ const Routes = () => {
       <ErrorBoundary>
       <ScrollToTop />
       <RouterRoutes>
-        {/* Set the root path "/" to render the LoginPage, ensuring it is the first view */}
+        {/*
+          CRITICAL: This line ensures that when you access the root URL ("/"), 
+          the LoginPage is rendered first, enforcing the authentication barrier.
+        */}
         <Route path="/" element={<LoginPage />} />
+        
         <Route path="/login" element={<LoginPage />} />
         <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
         <Route path="/job-seeker-dashboard" element={<JobSeekerDashboard />} />

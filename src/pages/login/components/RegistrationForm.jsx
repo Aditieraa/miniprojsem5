@@ -4,6 +4,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import { supabase } from '../../../supabaseClient'; // Import Supabase Client
 
 const RegistrationForm = ({ onRegister, isLoading, onToggleMode }) => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const RegistrationForm = ({ onRegister, isLoading, onToggleMode }) => {
     acceptTerms: false
   });
   const [errors, setErrors] = useState({});
+  const [generalError, setGeneralError] = useState('');
 
   const roleOptions = [
     { value: 'candidate', label: 'Job Seeker/Candidate' },
@@ -86,9 +88,38 @@ const RegistrationForm = ({ onRegister, isLoading, onToggleMode }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+    
+    setGeneralError('');
 
-    // Call registration handler from parent
-    await onRegister(formData);
+    try {
+        const { email, password, role } = formData;
+        
+        // 1. Call Supabase sign up
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                // Pass the chosen role in user_metadata
+                data: { user_role: role } 
+            }
+        });
+
+        if (error) {
+            setGeneralError(error.message);
+            return;
+        }
+
+        // 2. Registration successful, call onRegister to handle local profile setup and redirection
+        // Supabase sign-up typically auto-signs in, so we use the user data directly.
+        await onRegister({ 
+            user: data.user,
+            roleKey: role
+        });
+        
+    } catch (err) {
+        console.error('Registration failed:', err);
+        setGeneralError('An unexpected error occurred during registration.');
+    }
   };
 
   return (
@@ -100,13 +131,13 @@ const RegistrationForm = ({ onRegister, isLoading, onToggleMode }) => {
         <h1 className="text-3xl font-bold text-foreground mb-2">Create Your Account</h1>
         <p className="text-muted-foreground">Sign up to get started with ProLink</p>
       </div>
-      {errors.general && (
+      {(generalError || errors.general) && (
         <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
           <div className="flex items-start space-x-3">
             <Icon name="AlertCircle" size={20} className="text-error flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-error mb-1">Registration Failed</p>
-              <p className="text-xs text-error/80">{errors.general}</p>
+              <p className="text-xs text-error/80">{generalError || errors.general}</p>
             </div>
           </div>
         </div>

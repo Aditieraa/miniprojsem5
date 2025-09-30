@@ -4,6 +4,7 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import { supabase } from '../../../supabaseClient'; // Import Supabase Client
 
 const LoginForm = ({ onLogin, isLoading, onToggleMode }) => {
   const navigate = useNavigate();
@@ -13,14 +14,16 @@ const LoginForm = ({ onLogin, isLoading, onToggleMode }) => {
     rememberMe: false
   });
   const [errors, setErrors] = useState({});
+  const [generalError, setGeneralError] = useState('');
 
-  // Built-in fixed mock credentials
+  // Built-in fixed mock credentials to check for INITIAL DATA SEEDING purposes.
+  // These emails/passwords must be manually added to your Supabase Auth user list.
   const fixedCredentials = {
-candidate: { email: 'adititalekar2005@gmail.com', password: 'aditi123' },
-    recruiter: { email: 'arya2005@gmail.com', password: 'arya123' },
-    company: { email: 'diksha2006@gmail.com', password: 'arya123' },
-    interviewer: { email: 'vaibhav2005@gmail.com', password: 'vaibhav123' },
-    admin: { email: 'admin@gmail.com', password: 'admin123' }
+    candidate: { email: 'candidate@prolink.com', password: 'candidate123', roleKey: 'candidate' },
+    recruiter: { email: 'recruiter@prolink.com', password: 'recruiter123', roleKey: 'recruiter' },
+    company: { email: 'company@prolink.com', password: 'company123', roleKey: 'company' },
+    interviewer: { email: 'interviewer@prolink.com', password: 'interviewer123', roleKey: 'interviewer' },
+    admin: { email: 'admin@prolink.com', password: 'admin123', roleKey: 'admin' }
   };
 
   const handleInputChange = (e) => {
@@ -30,7 +33,6 @@ candidate: { email: 'adititalekar2005@gmail.com', password: 'aditi123' },
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -45,7 +47,6 @@ candidate: { email: 'adititalekar2005@gmail.com', password: 'aditi123' },
       newErrors.email = 'Please enter a valid email address';
     }
     
-    // Using a simple check here, as strict validation is for registration
     if (!formData.password) {
       newErrors.password = 'Password is required';
     }
@@ -60,101 +61,58 @@ candidate: { email: 'adititalekar2005@gmail.com', password: 'aditi123' },
     if (!validateForm()) return;
     
     const { email, password } = formData;
-    let userRoleKey = null;
-    
-    // 1. Check Fixed Mock Credentials
-    for (const [roleKey, creds] of Object.entries(fixedCredentials)) {
-      if (creds.email === email && creds.password === password) {
-        userRoleKey = roleKey;
-        break;
-      }
-    }
+    setGeneralError('');
 
-    // 2. Check Dynamically Registered Users
-    if (!userRoleKey) {
-        // Load custom users from local storage
-        const customUsers = JSON.parse(localStorage.getItem('prolink-mock-users') || '{}');
-        const customUser = customUsers[email];
-        if (customUser && customUser.password === password) {
-            userRoleKey = customUser.roleKey;
-        }
-    }
-    
-    if (!userRoleKey) {
-      setErrors({ 
-        general: `Invalid credentials. Please check your email/password. You can use any registered email or a fixed mock account.` 
-      });
-      return;
-    }
-
-    // --- Role Mapping and User Data Construction ---
-    let finalAppRole;
-    let userName;
-    let gender;
-    let nameSuffix = userRoleKey.charAt(0).toUpperCase() + userRoleKey.slice(1);
-
-    switch (userRoleKey) {
-      case 'candidate':
-        finalAppRole = 'jobSeeker';
-        userName = `User (${nameSuffix})`;
-        gender = 'men';
-        break;
-      case 'recruiter':
-        finalAppRole = 'recruiter';
-        userName = `Aditi (${nameSuffix})`;
-        gender = 'women';
-        break;
-      case 'company':
-        finalAppRole = 'recruiter';
-        userName = `TechCorp Inc. (${nameSuffix})`;
-        gender = 'men';
-        break;
-      case 'interviewer':
-        finalAppRole = 'recruiter';
-        userName = `User (${nameSuffix})`;
-        gender = 'men';
-        break;
-      case 'admin':
-        finalAppRole = 'admin';
-        userName = `Admin User (Aditi)`;
-        gender = 'women';
-        break;
-      default:
-        // Handle dynamically registered users
-        finalAppRole = ['recruiter', 'company', 'interviewer', 'admin'].includes(userRoleKey) ? 'recruiter' : 'jobSeeker';
+    try {
+        // 1. Call Supabase sign in
+        const { data: { user }, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
         
-        // Use Aditi for recruiter side, User for job seeker side for dynamic accounts
-        if (finalAppRole === 'recruiter') {
-             userName = `Aditi (${nameSuffix})`;
-             gender = 'women';
-        } else {
-             userName = `User (${nameSuffix})`;
-             gender = 'men';
+        if (error) {
+            setGeneralError(error.message); 
+            return;
         }
-    }
 
-    const userData = {
-      id: Date.now(),
-      name: userName,
-      email: email,
-      role: finalAppRole, 
-      avatar: `https://randomuser.me/api/portraits/${gender}/${Math.floor(Math.random() * 50) + 1}.jpg`
-    };
-    
-    // Call the onLogin prop to handle saving the user and navigating.
-    await onLogin(userData);
+        // 2. Authentication successful, determine the role
+        // The role should be stored in user_metadata during registration.
+        let userRoleKey = user?.user_metadata?.user_role;
+        
+        // Fallback for fixed mock accounts (needed if metadata wasn't set manually in Supabase)
+        if (!userRoleKey) {
+            const fixedMatch = Object.values(fixedCredentials).find(cred => cred.email === email);
+            userRoleKey = fixedMatch ? fixedMatch.roleKey : 'candidate'; 
+        }
+
+        // 3. Pass user data to onLogin handler
+        await onLogin({
+            user,
+            roleKey: userRoleKey
+        });
+
+    } catch (err) {
+        console.error('Login failed:', err);
+        setGeneralError('An unexpected error occurred during login.');
+    }
   };
 
   const handleSocialLogin = async (provider) => {
-    const userData = {
-      id: Date.now(),
-      name: provider === 'google' ? 'Google User' : 'LinkedIn User',
-      email: `${provider}user@example.com`,
-      role: 'jobSeeker',
-      avatar: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 50) + 1}.jpg`
-    };
-    
-    await onLogin(userData);
+    setGeneralError('');
+    try {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: provider,
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        if (error) {
+            setGeneralError(error.message);
+        }
+    } catch (err) {
+        console.error('Social login failed:', err);
+        setGeneralError('An unexpected error occurred during social login.');
+    }
   };
 
   return (
@@ -166,13 +124,13 @@ candidate: { email: 'adititalekar2005@gmail.com', password: 'aditi123' },
         <h1 className="text-3xl font-bold text-foreground mb-2">Welcome back</h1>
         <p className="text-muted-foreground">Sign in to your ProLink account</p>
       </div>
-      {errors.general && (
+      {(generalError || errors.general) && (
         <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
           <div className="flex items-start space-x-3">
             <Icon name="AlertCircle" size={20} className="text-error flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-error mb-1">Authentication Failed</p>
-              <p className="text-xs text-error/80">{errors.general}</p>
+              <p className="text-xs text-error/80">{generalError || errors.general}</p>
             </div>
           </div>
         </div>
