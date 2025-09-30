@@ -108,13 +108,26 @@ const RegistrationForm = ({ onRegister, isLoading, onToggleMode }) => {
             setGeneralError(error.message);
             return;
         }
+        
+        if (!data.user) {
+            // This handles scenario where an email is sent but user isn't immediately logged in (email confirmation needed)
+            setGeneralError("Registration successful! Please check your email to confirm your account before logging in.");
+            return;
+        }
 
-        // 2. Registration successful, call onRegister to handle local profile setup and redirection
-        // Supabase sign-up typically auto-signs in, so we use the user data directly.
-        await onRegister({ 
-            user: data.user,
-            roleKey: role
-        });
+        // 2. Registration successful & user logged in: proceed to create/update profile
+        try {
+            await onRegister({ 
+                user: data.user,
+                roleKey: role
+            });
+        } catch (profileError) {
+            // CRITICAL: Handle profile creation failure and provide better feedback
+            console.error('Profile creation failed after sign up:', profileError);
+            setGeneralError(`Registration failed to finalize your profile. Reason: ${profileError.message}. Please verify the INSERT RLS policy on the 'profiles' table.`);
+            // Sign out the user created in Auth to prevent half-registered state
+            await supabase.auth.signOut();
+        }
         
     } catch (err) {
         console.error('Registration failed:', err);

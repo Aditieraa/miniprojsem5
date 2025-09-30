@@ -21,18 +21,7 @@ const JobSeekerDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock user data (for initial display while waiting for real data/session check)
-  const mockUser = {
-    id: 1,
-    name: "User",
-    email: "user@email.com",
-    role: "job_seeker",
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-    profileCompletion: 75,
-    memberSince: "2024-01-15"
-  };
-  
-  // Mock applications data
+  // Mock data definitions (kept for dashboard display purposes)
   const mockApplications = [
     {
       id: 1,
@@ -68,7 +57,6 @@ const JobSeekerDashboard = () => {
     }
   ];
 
-  // Mock job recommendations
   const mockRecommendations = [
     {
       id: 1,
@@ -105,7 +93,6 @@ const JobSeekerDashboard = () => {
     }
   ];
 
-  // Mock interviews
   const mockInterviews = [
     {
       id: 1,
@@ -128,7 +115,6 @@ const JobSeekerDashboard = () => {
     }
   ];
 
-  // Mock skill gaps
   const mockSkillGaps = [
     {
       id: 1,
@@ -156,7 +142,6 @@ const JobSeekerDashboard = () => {
     }
   ];
 
-  // Mock learning recommendations
   const mockLearningRecommendations = [
     {
       id: 1,
@@ -178,7 +163,6 @@ const JobSeekerDashboard = () => {
     }
   ];
 
-  // Mock job alerts
   const mockJobAlerts = [
     {
       id: 1,
@@ -200,7 +184,6 @@ const JobSeekerDashboard = () => {
     }
   ];
 
-  // Mock saved searches
   const mockSavedSearches = [
     {
       id: 1,
@@ -218,7 +201,6 @@ const JobSeekerDashboard = () => {
     }
   ];
 
-  // Mock profile completion data
   const mockProfileData = {
     completionScore: 75,
     missingItems: [
@@ -251,7 +233,6 @@ const JobSeekerDashboard = () => {
     ]
   };
 
-  // Mock notifications
   const mockNotifications = [
     {
       id: 1,
@@ -283,14 +264,27 @@ const JobSeekerDashboard = () => {
   useEffect(() => {
     const storedUser = localStorage.getItem('prolink-user');
     if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const currentUser = JSON.parse(storedUser);
+        
+        // --- ROLE CHECK: Redirect if not a job seeker ---
+        if (currentUser.role !== 'jobSeeker') {
+            navigate('/recruiter-dashboard', { replace: true });
+            return;
+        }
+        
+        setUser(currentUser);
+    } else {
+        // If no user is found, redirect to login
+        navigate('/login', { replace: true });
+        return;
     }
+
     // Simulate loading external data like notifications
     setTimeout(() => {
       setNotifications(mockNotifications);
       setIsLoading(false);
     }, 1000);
-  }, []);
+  }, [navigate]);
 
   const handleLogout = async () => {
     // 1. Call Supabase sign out
@@ -335,9 +329,13 @@ const JobSeekerDashboard = () => {
     navigate('/application-tracking');
   };
 
+  // --- CRITICAL FIX: Direct to Job Details for Persistence ---
   const handleQuickApply = (jobId) => {
-    navigate('/job-details', { state: { jobId } });
+    // Navigates to the JobDetailsPage, which will handle the application submission
+    // and Supabase persistence logic.
+    navigate(`/job-details?id=${jobId}`);
   };
+  // -----------------------------------------------------------
 
   const handleViewCalendar = () => {
     console.log('View calendar');
@@ -387,9 +385,8 @@ const JobSeekerDashboard = () => {
     );
   };
 
-  // If user object is null, but isLoading is false, the user is not authenticated.
+  // If user object is null, but isLoading is false, the user is not authenticated or being redirected.
   if (isLoading || !user) {
-    // Show a loading screen while we determine auth state
     return (
       <div className="min-h-screen bg-background">
         <Header user={user} onLogout={handleLogout} />
@@ -471,7 +468,7 @@ const JobSeekerDashboard = () => {
               />
             </div>
 
-            /* Right Column - Secondary Content */
+            {/* Right Column - Secondary Content */}
             <div className="lg:col-span-4 space-y-6">
               {/* Profile Completion */}
               <ProfileCompletionCard
@@ -488,7 +485,7 @@ const JobSeekerDashboard = () => {
                 onJoinInterview={handleJoinInterview}
               />
 
-              /* Skill Analysis */
+              {/* Skill Analysis */}
               <SkillAnalysisCard
                 skillGaps={mockSkillGaps}
                 recommendations={mockLearningRecommendations}

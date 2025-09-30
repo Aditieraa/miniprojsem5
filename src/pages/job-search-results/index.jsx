@@ -8,6 +8,7 @@ import JobListSkeleton from './components/JobListSkeleton';
 import QuickApplyModal from './components/QuickApplyModal';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
+import { supabase } from '../../supabaseClient'; // Import Supabase Client
 
 const JobSearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,19 +23,22 @@ const JobSearchResults = () => {
   const [showQuickApply, setShowQuickApply] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
+  
+  const [user, setUser] = useState(null); // The authenticated user
 
-  // Mock user data
-  const user = {
-    id: 1,
-    name: "Sarah Johnson",
-    email: "sarah.johnson@email.com",
-    role: "job_seeker"
-  };
-
-  // Mock job data
+  useEffect(() => {
+    // Read the active user from localStorage for header display and context
+    const storedUser = localStorage.getItem('prolink-user');
+    if (storedUser) {
+        setUser(JSON.parse(storedUser));
+    }
+  }, []); 
+  
+  // Mock job data (ID changed to UUIDs)
   const mockJobs = [
     {
-      id: 1,
+      // ID changed to valid UUID format
+      id: "a1b2c3d4-0001-4001-8001-000000000001",
       title: "Senior Frontend Developer",
       company: {
         name: "TechCorp Inc.",
@@ -57,7 +61,8 @@ const JobSearchResults = () => {
       isSaved: false
     },
     {
-      id: 2,
+      // ID changed to valid UUID format
+      id: "a1b2c3d4-0002-4002-8002-000000000002",
       title: "Product Manager",
       company: {
         name: "StartupXYZ",
@@ -75,12 +80,12 @@ const JobSearchResults = () => {
       benefits: ["Health Insurance", "Stock Options", "Learning Budget"],
       postedDate: "2025-01-09T14:30:00Z",
       priority: "urgent",
-      aiMatchPercentage: 78,
       hasApplied: false,
       isSaved: true
     },
     {
-      id: 3,
+      // ID changed to valid UUID format
+      id: "a1b2c3d4-0003-4003-8003-000000000003",
       title: "UX/UI Designer",
       company: {
         name: "Design Studio",
@@ -103,7 +108,8 @@ const JobSearchResults = () => {
       isSaved: false
     },
     {
-      id: 4,
+      // ID changed to valid UUID format
+      id: "a1b2c3d4-0004-4004-8004-000000000004",
       title: "Data Scientist",
       company: {
         name: "Analytics Pro",
@@ -126,7 +132,8 @@ const JobSearchResults = () => {
       isSaved: false
     },
     {
-      id: 5,
+      // ID changed to valid UUID format
+      id: "a1b2c3d4-0005-4005-8005-000000000005",
       title: "DevOps Engineer",
       company: {
         name: "CloudTech Solutions",
@@ -266,19 +273,74 @@ const JobSearchResults = () => {
     }
   }, [jobs]);
 
+  // --- CRITICAL FIX: Supabase INSERT for Application ---
   const handleApplicationSubmit = async (applicationData) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    if (!user || !user.id) {
+        throw new Error('User not authenticated. Please log in before applying.');
+    }
     
-    // Update job status
+    // Resume file check (required by the modal)
+    if (!applicationData.resume) {
+        throw new Error('Resume file is required for quick apply.');
+    }
+
+    const { jobId, expectedSalary, availabilityDate, coverLetter, additionalInfo } = applicationData;
+    const applicationCompany = selectedJob?.company?.name || 'Unknown Company';
+    const applicationPosition = selectedJob?.title || 'Unknown Position';
+
+    // 1. Upload Resume to Supabase Storage (Assumes 'resumes' bucket exists)
+    const resumeFile = applicationData.resume;
+    // Create a unique file path using user ID, job ID, and timestamp
+    const filePath = `${user.id}/${jobId}-${Date.now()}-${resumeFile.name}`;
+    
+    const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(filePath, resumeFile, {
+            cacheControl: '3600',
+            upsert: false
+        });
+
+    if (uploadError) {
+        console.error('Storage upload failed:', uploadError);
+        throw new Error(`Resume upload failed: ${uploadError.message}`);
+    }
+
+    // 2. Insert application record into the 'applications' table
+    const { data, error: insertError } = await supabase
+        .from('applications')
+        .insert({
+            user_id: user.id,
+            job_id: jobId, // This is now a UUID string
+            company: applicationCompany,
+            position: applicationPosition,
+            appliedDate: new Date().toISOString(),
+            status: 'applied', // Initial status
+            expected_salary: expectedSalary,
+            availability_date: availabilityDate,
+            cover_letter: coverLetter,
+            additional_info: additionalInfo,
+            resume_storage_path: filePath, // Store the reference to the file
+        })
+        .select()
+        .single();
+    
+    if (insertError) {
+        console.error('Supabase Application INSERT failed:', insertError);
+        // Clean up the stored file since the DB insert failed
+        await supabase.storage.from('resumes').remove([filePath]);
+        throw new Error(`Application data storage failed: ${insertError.message}.`);
+    }
+
+    // 3. Update job card status locally for visual feedback
     setJobs(prevJobs =>
       prevJobs?.map(job =>
-        job?.id === applicationData?.jobId ? { ...job, hasApplied: true } : job
+        job?.id === jobId ? { ...job, hasApplied: true } : job
       )
     );
     
-    console.log('Application submitted:', applicationData);
+    console.log('Application submitted to Supabase successfully:', data);
   };
+  // ----------------------------------------------------
 
   const loadMoreJobs = () => {
     // Simulate loading more jobs

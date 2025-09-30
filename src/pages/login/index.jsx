@@ -4,12 +4,24 @@ import AuthContainer from './components/AuthContainer';
 import AnimatedBackground from './components/AnimatedBackground';
 import AccessibilityMenu from './components/AccessibilityMenu';
 import LoadingSpinner from './components/LoadingSpinner';
-import { supabase } from '../../supabaseClient'; // Import supabase client
+import { supabase } from '../../supabaseClient';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState(null);
+
+  const getDestinationPath = (role) => {
+      switch (role) {
+          case 'jobSeeker':
+              return '/job-seeker-dashboard';
+          case 'recruiter':
+          case 'admin':
+              return '/recruiter-dashboard';
+          default:
+              return '/job-seeker-dashboard';
+      }
+  };
 
   useEffect(() => {
     // Check if user is already logged in on initial load (e.g., after refresh)
@@ -18,22 +30,9 @@ const LoginPage = () => {
       const userData = JSON.parse(savedUser);
       setUser(userData);
       
-      // Determine the correct dashboard based on the stored 'role' (app role: jobSeeker, recruiter, admin)
-      let destinationPath;
-      switch (userData?.role) {
-        case 'jobSeeker':
-          destinationPath = '/job-seeker-dashboard';
-          break;
-        case 'recruiter':
-        case 'admin':
-          // All hiring-side roles (Recruiter, Company, Interviewer, Admin) map to the recruiter dashboard
-          destinationPath = '/recruiter-dashboard';
-          break;
-        default:
-          destinationPath = '/job-seeker-dashboard';
-      }
+      const destinationPath = getDestinationPath(userData?.role);
 
-      // Redirect the authenticated user immediately, replacing the login entry in history
+      // Redirect the authenticated user immediately
       navigate(destinationPath, { replace: true });
     }
   }, [navigate]);
@@ -42,26 +41,12 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Wait for a moment to simulate network latency
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       // Save user data to localStorage (Local copy for non-API components)
       localStorage.setItem('prolink-user', JSON.stringify(userData));
       setUser(userData);
       
       // Determine navigation path after successful form submission
-      let destinationPath;
-      switch (userData?.role) {
-        case 'jobSeeker':
-          destinationPath = '/job-seeker-dashboard';
-          break;
-        case 'recruiter':
-        case 'admin':
-          destinationPath = '/recruiter-dashboard';
-          break;
-        default:
-          destinationPath = '/job-seeker-dashboard';
-      }
+      const destinationPath = getDestinationPath(userData?.role);
       
       // Navigate after successful login
       navigate(destinationPath, { replace: true });

@@ -19,6 +19,7 @@ const QuickApplyModal = ({
     additionalInfo: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState('');
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -37,17 +38,36 @@ const QuickApplyModal = ({
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
+    setSubmissionError(''); // Clear previous errors
     setIsSubmitting(true);
     
+    // Quick validation check
+    if (!formData.resume) {
+        setSubmissionError('Error: Resume file must be uploaded.');
+        setIsSubmitting(false);
+        return;
+    }
+    if (!formData.availabilityDate || formData.availabilityDate === '') {
+        setSubmissionError('Error: Availability must be selected.');
+        setIsSubmitting(false);
+        return;
+    }
+
     try {
+      // The onSubmit function (in parent) handles the actual Supabase call
       await onSubmit({
         jobId: job?.id,
         ...formData
       });
-      onClose();
+      // Only close if submission was successful
+      onClose(); 
     } catch (error) {
       console.error('Application submission failed:', error);
+      // Display the detailed error from the parent component
+      // This will often contain the RLS or missing column message from Supabase
+      setSubmissionError(error.message || 'Application failed. Check RLS on Storage/Applications table.');
     } finally {
+      // CRITICAL FIX: Ensure loading state is reset regardless of success/failure
       setIsSubmitting(false);
     }
   };
@@ -65,9 +85,9 @@ const QuickApplyModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className={`bg-card border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden ${className}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border">
+      <div className={`bg-card border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col ${className}`}>
+        {/* Header (Fixed Top) */}
+        <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
           <div>
             <h2 className="text-xl font-semibold text-foreground">Quick Apply</h2>
             <p className="text-sm text-muted-foreground mt-1">
@@ -83,8 +103,14 @@ const QuickApplyModal = ({
           </Button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        {/* Content (Scrollable Area) */}
+        <div className="p-6 overflow-y-auto flex-1 max-h-[calc(90vh-140px)]">
+          {submissionError && (
+              <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg">
+                <p className="text-sm text-error font-medium">Submission Failed</p>
+                <p className="text-xs text-error/80 mt-1">{submissionError}</p>
+              </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Resume Upload */}
             <div>
@@ -155,6 +181,7 @@ const QuickApplyModal = ({
                 options={availabilityOptions}
                 value={formData?.availabilityDate}
                 onChange={(value) => handleInputChange('availabilityDate', value)}
+                placeholder="Select availability"
                 required
               />
             </div>
@@ -205,8 +232,8 @@ const QuickApplyModal = ({
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-border">
+        {/* Footer (Fixed Bottom) */}
+        <div className="flex items-center justify-between p-6 border-t border-border flex-shrink-0">
           <div className="text-sm text-muted-foreground">
             Your application will be sent directly to the employer
           </div>
@@ -221,7 +248,8 @@ const QuickApplyModal = ({
             <Button
               onClick={handleSubmit}
               loading={isSubmitting}
-              disabled={!formData?.resume}
+              // Disabled only if submitting or if critical fields are missing
+              disabled={isSubmitting || !formData.resume || !formData.availabilityDate}
             >
               Submit Application
             </Button>

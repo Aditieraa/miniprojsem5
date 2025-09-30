@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import LoginForm from './LoginForm';
 import RegistrationForm from './RegistrationForm';
-import { supabase, mapRoleToAppRole, createMockUserData } from '../../../supabaseClient';
+import { supabase, mapRoleToAppRole, createOrUpdateProfile, fetchUserProfile } from '../../../supabaseClient';
 
 const AuthContainer = ({ onLogin, isLoading }) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -9,44 +9,49 @@ const AuthContainer = ({ onLogin, isLoading }) => {
   // Check Supabase session on initial load
   useEffect(() => {
     const checkSession = async () => {
+      // Get the currently logged-in Supabase user
       const { data: { user } } = await supabase.auth.getUser();
+      
       if (user) {
-        // If a valid Supabase session exists, log them in locally
-        const roleKey = user?.user_metadata?.user_role || 'candidate'; // Get role from metadata
+        // Fetch the profile created during registration/login
+        const profile = await fetchUserProfile(user.id);
         
-        const { userName, gender } = createMockUserData(user.email, roleKey);
-
-        const userData = {
-            id: user.id,
-            name: userName,
-            email: user.email,
-            role: mapRoleToAppRole(roleKey),
-            avatar: `https://randomuser.me/api/portraits/${gender}/${Math.floor(Math.random() * 50) + 1}.jpg`
-        };
-
-        // This triggers the local user state update and redirect in LoginPage.jsx
-        onLogin(userData); 
+        if (profile) {
+            const userData = {
+                id: profile.id,
+                name: profile.name,
+                email: profile.email,
+                role: mapRoleToAppRole(profile.user_role), // Use role from DB
+                avatar: profile.avatar_url // Use avatar from DB
+            };
+            // This triggers the local user state update and redirect in LoginPage.jsx
+            onLogin(userData); 
+        } else {
+            // Handle case where auth user exists but profile table entry is missing/deleted.
+            // This can happen on fresh signup before metadata is set, but should be handled by handleSupabaseAuthCallback.
+            // For a robust app, we might force a profile creation/update here.
+            // For now, assume handleSupabaseAuthCallback is the primary path after form submission/social login.
+            console.warn('Auth user found, but profile entry missing or not yet created. Relying on next step.');
+        }
       }
     };
     checkSession();
   }, []);
 
   const handleSupabaseAuthCallback = async ({ user, roleKey }) => {
-    if (!user) return; // Should not happen with successful auth call
+    if (!user) return; 
 
-    const finalAppRole = mapRoleToAppRole(roleKey);
-    const { userName, gender } = createMockUserData(user.email, roleKey);
-    
-    const userData = {
-        id: user.id,
-        name: userName,
-        email: user.email,
-        role: finalAppRole,
-        avatar: `https://randomuser.me/api/portraits/${gender}/${Math.floor(Math.random() * 50) + 1}.jpg`
-    };
-    
-    // Proceed to login flow handler in LoginPage.jsx
-    await onLogin(userData);
+    // Create or update the profile entry in the 'profiles' table
+    try {
+        const userData = await createOrUpdateProfile(user, roleKey);
+        
+        // Proceed to login flow handler in LoginPage.jsx
+        await onLogin(userData);
+    } catch (error) {
+        console.error("Failed to process user profile after auth:", error);
+        // Fallback: Sign out to prevent user access without a profile
+        await supabase.auth.signOut();
+    }
   };
 
   return (

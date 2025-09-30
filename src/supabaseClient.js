@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Load Supabase configuration from environment variables
-// VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be defined in your .env file
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -49,7 +48,6 @@ export const createMockUserData = (email, roleKey) => {
     let gender;
     
     if (finalAppRole === 'recruiter' || finalAppRole === 'admin') {
-        // Use Aditi for fixed recruiter/admin accounts, or the first part of the email
         userName = namePart === 'admin' || namePart === 'recruiter' ? `Aditi (${nameSuffix})` : `${namePart.charAt(0).toUpperCase() + namePart.slice(1)} (${nameSuffix})`;
         gender = 'women';
     } else if (finalAppRole === 'jobSeeker') {
@@ -61,4 +59,62 @@ export const createMockUserData = (email, roleKey) => {
     }
     
     return { userName, gender };
+};
+
+
+/**
+ * Fetches the user's profile from the 'profiles' table.
+ */
+export const fetchUserProfile = async (userId) => {
+    if (!userId) return null;
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching user profile:', error);
+        if (error.code === 'PGRST116') {
+            return null; 
+        }
+        return null;
+    }
+    return data;
+};
+
+/**
+ * Creates or updates a profile entry in the 'profiles' table after successful sign-up/in.
+ */
+export const createOrUpdateProfile = async (user, roleKey) => {
+    const finalAppRole = mapRoleToAppRole(roleKey);
+    const { userName, gender } = createMockUserData(user.email, roleKey);
+    
+    const randomSeed = Math.floor(Math.random() * 50) + 1;
+    
+    // Attempt to insert/update the profile in the public.profiles table
+    const { data, error } = await supabase
+        .from('profiles')
+        .upsert({
+            id: user.id,
+            email: user.email,
+            name: userName,
+            user_role: roleKey,
+            avatar_url: `https://randomuser.me/api/portraits/${gender}/${randomSeed}.jpg`
+        }, { onConflict: 'id', ignoreDuplicates: false })
+        .select()
+        .single();
+        
+    if (error) {
+        console.error('Error creating/updating profile:', error);
+        throw error;
+    }
+    
+    return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: finalAppRole, // Use the mapped application role
+        avatar: data.avatar_url
+    };
 };
